@@ -8,31 +8,31 @@ import (
 
 const configFileName = ".gogatorconfig.json"
 
-type Config struct {
+type Settings struct {
 	DBURL    string `json:"db_url"`
 	UserName string `json:"current_user_name"`
 }
 
-func (cfg *Config) SetUser(name string) error {
+func (cfg *Settings) SetUser(name string) error {
 	cfg.UserName = name
 	return write(*cfg)
 }
 
-func Read() (Config, error) {
+func Read() (Settings, error) {
 	fpath, err := getConfigFilePath()
 	if err != nil {
-		return Config{}, err
+		return Settings{}, err
 	}
 
 	f, err := os.Open(fpath)
 	if err != nil {
-		return Config{}, err
+		return Settings{}, err
 	}
 	defer f.Close()
 
-	var cfg Config
+	var cfg Settings
 	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-		return Config{}, err
+		return Settings{}, err
 	}
 	return cfg, nil
 }
@@ -46,7 +46,7 @@ func getConfigFilePath() (string, error) {
 	return fpath, nil
 }
 
-func write(cfg Config) error {
+func write(cfg Settings) error {
 	fpath, err := getConfigFilePath()
 	if err != nil {
 		return err
