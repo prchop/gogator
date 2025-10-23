@@ -8,6 +8,7 @@ import (
 
 const configFileName = ".gogatorconfig.json"
 
+// Settings is the default config
 type Settings struct {
 	DBURL    string `json:"db_url"`
 	UserName string `json:"current_user_name"`
@@ -18,6 +19,7 @@ func (cfg *Settings) SetUser(name string) error {
 	return write(*cfg)
 }
 
+// Read config file
 func Read() (Settings, error) {
 	fpath, err := getConfigFilePath()
 	if err != nil {
