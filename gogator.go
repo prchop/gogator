@@ -10,7 +10,7 @@ import (
 )
 
 type state struct {
-	config *config.Settings
+	cfg *config.Settings
 }
 
 type command struct {
@@ -36,7 +36,7 @@ func (c *commands) register(name string, f handler) {
 	c.registeredCmds[name] = f
 }
 
-func loginHandler(s *state, cmd command) error {
+func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
 		log.Printf("Usage: %s <username>\n", cmd.name)
 		return fmt.Errorf("username is required")
@@ -71,6 +71,6 @@ func Run() {
 		name: cmdName, args: cmdArgs,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[ERROR]: %v", err)
 	}
 }
