@@ -92,6 +92,21 @@ func handlerRegister(s *state, cmd command) error {
 	return nil
 }
 
+func handlerListUsers(s *state, cmd command) error {
+	users, err := s.db.GetAllUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't get all users: %w", err)
+	}
+	for _, u := range users {
+		if u.Name == s.cfg.UserName {
+			fmt.Printf(" * Name:    %v (current)\n", u.Name)
+			continue
+		}
+		fmt.Printf(" * Name:    %v\n", u.Name)
+	}
+	return nil
+}
+
 func handlerReset(s *state, cmd command) error {
 	if err := s.db.DeleteAllUsers(context.Background()); err != nil {
 		return fmt.Errorf("couldn't delete users: %w", err)
@@ -123,6 +138,7 @@ func Run() {
 
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("users", handlerListUsers)
 	cmds.register("reset", handlerReset)
 
 	if len(os.Args) < 2 {
