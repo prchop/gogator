@@ -92,6 +92,14 @@ func handlerRegister(s *state, cmd command) error {
 	return nil
 }
 
+func handlerReset(s *state, cmd command) error {
+	if err := s.db.DeleteAllUsers(context.Background()); err != nil {
+		return fmt.Errorf("couldn't delete users: %w", err)
+	}
+	fmt.Println("Database reset successfully!")
+	return nil
+}
+
 func printUser(u database.User) {
 	fmt.Printf(" * ID:      %v\n", u.ID)
 	fmt.Printf(" * Name:    %v\n", u.Name)
@@ -115,6 +123,7 @@ func Run() {
 
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")
