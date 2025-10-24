@@ -1,3 +1,5 @@
+// Package gogator contains the implementaion of gogator
+// cli app.
 package gogator
 
 import (
@@ -107,6 +109,21 @@ func handlerListUsers(s *state, cmd command) error {
 	return nil
 }
 
+func handlerAggregate(s *state, cmd command) error {
+	if len(cmd.args) != 1 {
+		log.Printf("Usage: %s <url>\n", cmd.name)
+		return fmt.Errorf("url is required")
+	}
+
+	feed, err := fetchFeed(context.Background(), cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("couldn't fetch feed: %w", err)
+	}
+
+	fmt.Printf("Feed: %+v", feed)
+	return nil
+}
+
 func handlerReset(s *state, cmd command) error {
 	if err := s.db.DeleteAllUsers(context.Background()); err != nil {
 		return fmt.Errorf("couldn't delete users: %w", err)
@@ -140,6 +157,7 @@ func Run() {
 	cmds.register("register", handlerRegister)
 	cmds.register("users", handlerListUsers)
 	cmds.register("reset", handlerReset)
+	cmds.register("agg", handlerAggregate)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")
