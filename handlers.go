@@ -95,6 +95,52 @@ func handlerAggregate(s *state, cmd command) error {
 	return nil
 }
 
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		log.Printf("Usage: %s <name> <url>\n", cmd.name)
+		return fmt.Errorf("feed name and url is required")
+	}
+
+	name := cmd.args[0]
+	if len(cmd.args) == 1 {
+		log.Printf("Usage: %s %s <url>\n", cmd.name, name)
+		return fmt.Errorf("url is required")
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.cfg.UserName)
+	if err != nil {
+		return fmt.Errorf("couldn't get user: %w", err)
+	}
+
+	url := cmd.args[1]
+	feed, err := s.db.CreateFeed(context.Background(),
+		database.CreateFeedParams{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			Name:      name,
+			Url:       url,
+			UserID:    user.ID,
+		})
+	if err != nil {
+		return fmt.Errorf("couldn't create feed: %w", err)
+	}
+
+	fmt.Println("Feed created successfully:")
+	printFeed(feed, user)
+	fmt.Println("=====================================")
+	return nil
+}
+
+func printFeed(feed database.Feed, user database.User) {
+	fmt.Printf("* ID:            %s\n", feed.ID)
+	fmt.Printf("* Created:       %v\n", feed.CreatedAt)
+	fmt.Printf("* Updated:       %v\n", feed.UpdatedAt)
+	fmt.Printf("* Name:          %s\n", feed.Name)
+	fmt.Printf("* URL:           %s\n", feed.Url)
+	fmt.Printf("* User:          %s\n", user.Name)
+}
+
 func handlerReset(s *state, cmd command) error {
 	if err := s.db.DeleteAllUsers(context.Background()); err != nil {
 		return fmt.Errorf("couldn't delete users: %w", err)
