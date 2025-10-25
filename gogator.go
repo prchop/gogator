@@ -63,6 +63,7 @@ func Run() {
 	cmds.register("reset", handlerReset)
 	cmds.register("agg", handlerAggregate)
 	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerListFeeds)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")
