@@ -10,6 +10,8 @@ import (
 	"github.com/prchop/gogator/internal/database"
 )
 
+type handler func(*state, command) error
+
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
 		log.Printf("Usage: %s <username>\n", cmd.name)

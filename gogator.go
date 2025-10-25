@@ -23,8 +23,6 @@ type command struct {
 	args []string
 }
 
-type handler func(*state, command) error
-
 type commands struct {
 	registeredCmds map[string]handler
 }
