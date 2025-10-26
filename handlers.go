@@ -93,7 +93,7 @@ func handlerAggregate(s *state, cmd command) error {
 		return fmt.Errorf("couldn't fetch feed: %w", err)
 	}
 
-	fmt.Printf("Feed: %+v", feed)
+	fmt.Printf("Feed: %+v\n", feed)
 	return nil
 }
 
