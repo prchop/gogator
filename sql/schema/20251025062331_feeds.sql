@@ -9,4 +9,4 @@ CREATE TABLE feeds (
 );
 
 -- +goose Down
-DELETE TABLE IF EXISTS feeds;
+DROP TABLE IF EXISTS feeds;
