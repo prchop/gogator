@@ -11,6 +11,7 @@ import (
 )
 
 type handler func(*state, command) error
+type handlerLoggedIn func(*state, command, database.User) error
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
@@ -97,7 +98,7 @@ func handlerAggregate(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.args) == 0 {
 		log.Printf("Usage: %s <name> <url>\n", cmd.name)
 		return fmt.Errorf("feed name and url is required")
@@ -107,11 +108,6 @@ func handlerAddFeed(s *state, cmd command) error {
 	if len(cmd.args) == 1 {
 		log.Printf("Usage: %s %s <url>\n", cmd.name, name)
 		return fmt.Errorf("url is required")
-	}
-
-	user, err := s.db.GetUser(context.Background(), s.cfg.UserName)
-	if err != nil {
-		return fmt.Errorf("couldn't get user: %w", err)
 	}
 
 	url := cmd.args[1]
@@ -182,15 +178,10 @@ func printFeed(feed database.Feed, user database.User) {
 	fmt.Printf("* User:          %s\n", user.Name)
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 1 {
 		log.Printf("Usage: %s <url>\n", cmd.name)
 		return fmt.Errorf("url is required")
-	}
-
-	user, err := s.db.GetUser(context.Background(), s.cfg.UserName)
-	if err != nil {
-		return fmt.Errorf("couldn't get user: %w", err)
 	}
 
 	url := cmd.args[0]
@@ -217,12 +208,7 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerGetFollows(s *state, cmd command) error {
-	user, err := s.db.GetUser(context.Background(), s.cfg.UserName)
-	if err != nil {
-		return fmt.Errorf("couldn't get user: %w", err)
-	}
-
+func handlerGetFollows(s *state, cmd command, user database.User) error {
 	follows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return fmt.Errorf("couldn't feed follows: %w", err)
