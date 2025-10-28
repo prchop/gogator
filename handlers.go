@@ -85,17 +85,21 @@ func printUser(u database.User) {
 
 func handlerAggregate(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
-		log.Printf("Usage: %s <url>\n", cmd.name)
-		return fmt.Errorf("url is required")
+		log.Printf("Usage: %s <time>\ntime: 1ms, 1s, 1m, 1h\n", cmd.name)
+		return fmt.Errorf("time is required")
 	}
 
-	feed, err := fetchFeed(context.Background(), cmd.args[0])
+	reqtime := cmd.args[0]
+	td, err := time.ParseDuration(reqtime)
 	if err != nil {
-		return fmt.Errorf("couldn't fetch feed: %w", err)
+		return fmt.Errorf("couldn't parse the time duration")
 	}
+	fmt.Printf("Collecting feeds every %s\n", td.String())
 
-	fmt.Printf("Feed: %+v\n", feed)
-	return nil
+	ticker := time.NewTicker(td)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
 }
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {

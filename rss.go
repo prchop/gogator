@@ -3,10 +3,14 @@ package gogator
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
 	"html"
 	"io"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/prchop/gogator/internal/database"
 )
 
 type RSSFeed struct {
@@ -66,4 +70,34 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return &feed, nil
+}
+
+func scrapeFeeds(s *state) {
+	ctx := context.Background()
+	dbFeed, err := s.db.GetNextFeedToFetch(ctx)
+	if err != nil {
+		log.Printf("couldn't get feed: %v\n", err)
+		return
+	}
+
+	err = s.db.MarkFeedFetched(ctx,
+		database.MarkFeedFetchedParams{
+			UpdatedAt: time.Now().UTC(),
+			UserID:    dbFeed.UserID,
+		},
+	)
+	if err != nil {
+		log.Printf("couldn't mark feed to fetched: %v\n", err)
+		return
+	}
+
+	rss, err := fetchFeed(ctx, dbFeed.Url)
+	if err != nil {
+		log.Printf("couldn't fetch feed: %v\n", err)
+		return
+	}
+
+	for _, ri := range rss.Channel.Item {
+		fmt.Printf("RSS Title: %s\n", ri.Title)
+	}
 }
