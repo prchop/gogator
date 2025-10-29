@@ -101,6 +101,9 @@ func scrapeFeeds(s *state) {
 	for _, ri := range rss.Channel.Item {
 		savePost(ctx, s, ri, dbFeed.ID)
 	}
+
+	log.Printf("feed %q collected, %v posts found",
+		dbFeed.Name, len(rss.Channel.Item))
 }
 
 func savePost(ctx context.Context, s *state, ri RSSItem,
@@ -139,24 +142,29 @@ func toNullTime(s string) sql.NullTime {
 		return sql.NullTime{Valid: false}
 	}
 
-	formats := []string{
-		time.RFC1123Z,
-		time.RFC1123,
-		time.RFC822Z,
-		time.RFC822,
-		time.RFC3339,
-		"2006-01-02T15:04:05Z07:00",
-		"2006-01-02 15:04:05",
-	}
-
 	var t time.Time
 	var err error
-
-	for _, format := range formats {
-		t, err = time.Parse(format, s)
-		if err != nil {
-			log.Printf("[INFO]: %v", err)
-		}
+	switch len(s) {
+	case len(time.RFC1123Z):
+		t, err = time.Parse(time.RFC1123Z, s)
+	case len(time.RFC1123):
+		t, err = time.Parse(time.RFC1123, s)
+	case len(time.RFC822Z):
+		t, err = time.Parse(time.RFC822Z, s)
+	case len(time.RFC822):
+		t, err = time.Parse(time.RFC822, s)
+	case len(time.RFC3339):
+		t, err = time.Parse(time.RFC3339, s)
+	case len(time.UnixDate):
+		t, err = time.Parse(time.UnixDate, s)
+	default:
+		t, err = time.Parse(time.DateTime, s)
 	}
-	return sql.NullTime{Time: t.UTC(), Valid: false}
+
+	if err != nil {
+		log.Printf("couldn't parse time %q: %v", s, err)
+		return sql.NullTime{Valid: false}
+	}
+
+	return sql.NullTime{Time: t.UTC(), Valid: true}
 }
