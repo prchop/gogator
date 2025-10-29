@@ -50,6 +50,7 @@ func Run() {
 		log.Fatalf("error connecting to database: %v\n", err)
 	}
 	defer db.Close()
+
 	dbq := database.New(db)
 
 	programState := &state{cfg: &cfg, db: dbq}
@@ -65,6 +66,7 @@ func Run() {
 	cmds.register("follow", MiddlewareLoggedIn(handlerFollow))
 	cmds.register("following", MiddlewareLoggedIn(handlerGetFollows))
 	cmds.register("unfollow", MiddlewareLoggedIn(handlerUnfollow))
+	cmds.register("browse", handlerBrowse)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")

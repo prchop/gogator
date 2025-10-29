@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -252,7 +253,7 @@ func handlerUnfollow(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("couldn't delete feed: %w", err)
 	}
 
-	fmt.Printf("%q feed deleted successfully!\n", feed.Name)
+	fmt.Printf("%q feed unfollowed successfully!\n", feed.Name)
 	return nil
 }
 
@@ -280,6 +281,41 @@ func printFeedFollows(id, fid, uid uuid.UUID, ca, ua time.Time, fname, uname str
 	fmt.Printf("* FeedID:        %v\n", fid)
 	fmt.Printf("* FeedName:      %s\n", fname)
 	fmt.Printf("* UserName:      %s\n", uname)
+}
+
+func handlerBrowse(s *state, cmd command) error {
+	limit := "2"
+	if len(cmd.args) == 1 {
+		limit = cmd.args[0]
+	}
+
+	n, err := strconv.Atoi(limit)
+	if err != nil {
+		return fmt.Errorf("couldn't parse limit count")
+	}
+
+	posts, err := s.db.GetPosts(context.Background(), int32(n))
+	if err != nil {
+		return fmt.Errorf("couldn't get the posts: %w", err)
+	}
+
+	fmt.Printf("Found %d posts:\n", len(posts))
+	for _, p := range posts {
+		printPost(p)
+		fmt.Println("=====================================")
+	}
+	return nil
+}
+
+func printPost(p database.Post) {
+	fmt.Printf("* ID:            %s\n", p.ID)
+	fmt.Printf("* Created:       %v\n", p.CreatedAt)
+	fmt.Printf("* Updated:       %v\n", p.UpdatedAt)
+	fmt.Printf("* Title:         %s\n", p.Title)
+	fmt.Printf("* URL:           %s\n", p.Url)
+	fmt.Printf("* Desc:          %s\n", p.Description.String)
+	fmt.Printf("* PubDate:       %v\n", p.PublishedAt.Time)
+	fmt.Printf("* FeedID:        %v\n", p.FeedID)
 }
 
 func handlerReset(s *state, cmd command) error {
