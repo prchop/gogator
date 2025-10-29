@@ -5,6 +5,7 @@
 *.so
 *.dylib
 gogator
+gogator_test
 
 # Test binary
 *.test
