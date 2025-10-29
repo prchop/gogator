@@ -2,14 +2,15 @@ package gogator
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
-	"fmt"
 	"html"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prchop/gogator/internal/database"
 )
 
@@ -98,6 +99,64 @@ func scrapeFeeds(s *state) {
 	}
 
 	for _, ri := range rss.Channel.Item {
-		fmt.Printf("RSS Title: %s\n", ri.Title)
+		savePost(ctx, s, ri, dbFeed.ID)
 	}
+}
+
+func savePost(ctx context.Context, s *state, ri RSSItem,
+	feedID uuid.UUID,
+) error {
+	desc := toNullString(ri.Desc)
+	pubdate := toNullTime(ri.PubDate)
+	err := s.db.CreatePost(ctx, database.CreatePostParams{
+		ID:          uuid.New(),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+		Title:       ri.Title,
+		Url:         ri.Link,
+		Description: desc,
+		PublishedAt: pubdate,
+		FeedID:      feedID,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func toNullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{Valid: false}
+	}
+	return sql.NullString{
+		String: s,
+		Valid:  true,
+	}
+}
+
+func toNullTime(s string) sql.NullTime {
+	if s == "" {
+		return sql.NullTime{Valid: false}
+	}
+
+	formats := []string{
+		time.RFC1123Z,
+		time.RFC1123,
+		time.RFC822Z,
+		time.RFC822,
+		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02 15:04:05",
+	}
+
+	var t time.Time
+	var err error
+
+	for _, format := range formats {
+		t, err = time.Parse(format, s)
+		if err != nil {
+			log.Printf("[INFO]: %v", err)
+		}
+	}
+	return sql.NullTime{Time: t.UTC(), Valid: false}
 }
