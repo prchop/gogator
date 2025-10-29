@@ -9,15 +9,21 @@
 * Follow and unfollow RSS feeds that other users have added
 * View summaries of the aggregated posts in the terminal
 
-## Installation
+## Get The Source Code
 
-### 1. Clone this repo
+Download or clone the repository:
+
+- Clone it using Git:
 
 ```bash
-git clone https://github.com/prchop/goserve.git
+git clone https://github.com/prchop/gogator.git
 ```
 
-### 2. Install Go
+Or download it as a ZIP from GitHub and extract it.
+
+## Installation
+
+### 1. Install Go
 
 You’ll need Go 1.25 or higher.
 
@@ -31,7 +37,7 @@ If not installed, visit: https://go.dev/dl/ and follow the installation instruct
 
 After installation, ensure Go binaries are available:
 
-* Make sure `$(go env GOPATH)/bin or $GOBIN` is included, if not add with:
+* Make sure `$(go env GOPATH)/bin or $GOBIN` is included:
 
 ```bash
 echo $PATH
@@ -52,9 +58,30 @@ cd gogator
 go install ./cmd/gogator
 ```
 
-### 3. Configure the config file
+### 2. Install PostgreSQL
 
-This project uses a `.gogatorconfig.json` file in `$HOME` directory. Before running the app, create file in your `$HOME` directory set similarly to `.gogatorconfig.json.example`. You can left the `username` blank, but you must set the `db_url` field with your PostgreSQL connection string:
+Check if you already have it:
+
+```bash
+psql --version
+```
+
+If not installed, visit: https://www.postgresql.org/download/ and follow the installation instructions for your OS.
+
+## Configuration
+
+### 1. Run migrations (using Goose)
+
+* Install [goose](https://github.com/pressly/goose?tab=readme-ov-file#install)
+
+```bash
+cd gogator/sql/schema
+goose postgres "postgres://username:password@localhost:5432/dbname" up
+```
+
+### 2. Configure the config file
+
+This project uses a `.gogatorconfig.json` file in `$HOME` directory. Before running the app, create file in your `$HOME` directory and set similarly to `.gogatorconfig.json.example`. You can left the `username` blank, but you must set the `db_url` field with your PostgreSQL connection string:
 
 ```
 postgres://username:password@host:port/dbname
@@ -65,24 +92,6 @@ Example:
 ```
 postgres://postgres:secret123@localhost:5432/gator
 ```
-
-## Database Setup
-
-### 1. Run migrations (using Goose)
-
-```bash
-goose postgres "postgres://username:password@localhost:5432/dbname" up
-```
-
-### 2. Generate database access code (using sqlc)
-
-After migrating, navigate to the root directory (has `sqlc.yaml` file) and run:
-
-```bash
-sqlc generate
-```
-
-This will generate Go code to interact with the database.
 
 ## Usage
 
@@ -127,8 +136,10 @@ gogator <command> [args...]
 gogator register bob
 gogator login bob
 gogator addfeed "Hacker News RSS" "https://hnrss.org/newest"
+gogator follow "https://hnrss.org/newest"
+gogator unfollow "https://hnrss.org/newest"
 gogator following
-gogator agg
+gogator agg 2s
 ```
 
 ## Notes
@@ -139,7 +150,7 @@ gogator agg
 
 ## Technologies Used
 
-* **Go** — Backend and CLI
-* **PostgreSQL** — Database
-* **Goose** — Migrations
-* **sqlc** — Type-safe SQL to Go code generation
+* [Go](https://go.dev/) — Backend and CLI
+* [PostgreSQL](https://www.postgresql.org/) — Database
+* [Goose](https://github.com/pressly/goose) — Migrations
+* [sqlc](https://docs.sqlc.dev/en/latest/index.html) — Type-safe SQL to Go code
