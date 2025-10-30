@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
+	"sync"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -97,10 +102,36 @@ func handlerAggregate(s *state, cmd command) error {
 	}
 	fmt.Printf("Collecting feeds every %s\n", td.String())
 
+	var (
+		tc atomic.Int32
+		wg sync.WaitGroup
+	)
+
 	ticker := time.NewTicker(td)
-	for ; ; <-ticker.C {
-		scrapeFeeds(s)
-	}
+	done := make(chan struct{})
+	sigch := make(chan os.Signal, 1)
+
+	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM)
+
+	wg.Go(func() {
+		for {
+			select {
+			case <-ticker.C:
+				scrapeFeeds(s)
+				tc.Add(1)
+			case <-done:
+				ticker.Stop()
+				return
+			}
+		}
+	})
+
+	<-sigch
+	signal.Stop(sigch)
+	close(done)
+	wg.Wait()
+	log.Printf("[INFO] scraping ended, %d tasks processed.", tc.Load())
+	return nil
 }
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {
